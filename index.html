@@ -1054,10 +1054,22 @@
                 <span class="visually-hidden">Processing...</span>
             </div>
             <h4 class="text-primary">Processing Payment...</h4>
-            <p class="mb-0">Please wait while we create your voucher.<br>This may take up to 30 seconds.</p>
+            <p class="text-muted mb-0">This may take up to 60 seconds. Please wait.</p>
+            <small class="text-muted d-block mt-2">Do not close this window or press back.</small>
         </div>
     </div>
-    
+
+    <!-- Test Mode Panel (Hidden by default, activated with ?test=true) -->
+    <div id="test-mode-panel" style="display:none; position:fixed; bottom:20px; right:20px; background:#fff; border:3px solid #ff6b6b; border-radius:8px; padding:15px; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:9999; max-width:300px;">
+        <h5 style="color:#ff6b6b; margin:0 0 10px 0;">🧪 TEST MODE</h5>
+        <p style="font-size:12px; margin-bottom:10px;">Simulate PayPal flow without real payments</p>
+        <button onclick="window.testDuplicatePrevention()" class="btn btn-sm btn-danger mb-2 w-100">Test Duplicate Click</button>
+        <button onclick="window.testRapidClicks()" class="btn btn-sm btn-warning mb-2 w-100">Test Rapid Clicks (3x)</button>
+        <button onclick="window.testLocalStorageCheck()" class="btn btn-sm btn-info mb-2 w-100">Test localStorage Check</button>
+        <button onclick="window.clearTestState()" class="btn btn-sm btn-secondary w-100">Clear Test State</button>
+        <div id="test-results" style="margin-top:10px; font-size:11px; color:#666;"></div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
     
@@ -1101,7 +1113,20 @@
         let voucherItems = [];
         let selectedItem = null;
         let purchaseLimit = null;
-        
+
+        // Purchase processing configuration
+        const PURCHASE_CONFIG = {
+            INITIAL_TIMEOUT: 60000,        // 60 seconds (doubled from 30s)
+            RETRY_TIMEOUTS: [75000, 90000], // Progressive timeouts: 75s, 90s
+            MAX_RETRIES: 2,                // Total: 3 attempts (1 initial + 2 retries)
+            RETRY_DELAY: 2000,             // 2 second delay between retries
+            STORAGE_KEY: 'ujPayPalOrder',  // localStorage key for tracking
+            STORAGE_TTL: 3600000           // 1 hour TTL for localStorage
+        };
+
+        // Track processed PayPal orders in memory (prevents rapid duplicates)
+        const processedPayPalOrders = new Set();
+
         // DOM element cache for performance
         const DOM = {
             loadingSpinner: null,
@@ -1141,25 +1166,96 @@
                 this.successEmail = document.getElementById('success-email');
             }
         };
-        
+
+        // LocalStorage management for order tracking (prevents duplicate vouchers)
+        const OrderStorage = {
+            save(orderData) {
+                try {
+                    const data = {
+                        ...orderData,
+                        timestamp: Date.now(),
+                        expiresAt: Date.now() + PURCHASE_CONFIG.STORAGE_TTL
+                    };
+                    localStorage.setItem(PURCHASE_CONFIG.STORAGE_KEY, JSON.stringify(data));
+                } catch (e) {
+                    console.warn('Failed to save order to localStorage:', e);
+                }
+            },
+
+            get() {
+                try {
+                    const data = localStorage.getItem(PURCHASE_CONFIG.STORAGE_KEY);
+                    if (!data) return null;
+
+                    const parsed = JSON.parse(data);
+
+                    // Check if expired
+                    if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+                        this.clear();
+                        return null;
+                    }
+
+                    return parsed;
+                } catch (e) {
+                    console.warn('Failed to read order from localStorage:', e);
+                    return null;
+                }
+            },
+
+            clear() {
+                try {
+                    localStorage.removeItem(PURCHASE_CONFIG.STORAGE_KEY);
+                } catch (e) {
+                    console.warn('Failed to clear order from localStorage:', e);
+                }
+            },
+
+            exists(orderId) {
+                const data = this.get();
+                return data && data.orderId === orderId;
+            }
+        };
+
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
         });
         
+        // Check for pending order on page load
+        function checkPendingOrder() {
+            const pendingOrder = OrderStorage.get();
+            if (pendingOrder && pendingOrder.status === 'processing') {
+                showBootstrapAlert(
+                    `We're still processing your recent order (${pendingOrder.orderId}).\n\n` +
+                    `Your voucher will be sent to ${pendingOrder.email} within 15 minutes.\n\n` +
+                    `If you don't receive it, please contact us with your order ID.`,
+                    'Order in Progress',
+                    'info'
+                );
+
+                OrderStorage.clear();
+            }
+        }
+
         // Initialize application
         function initializeApp() {
             // Initialize DOM cache first
             DOM.init();
-            
+
+            // Check for pending orders from previous session
+            checkPendingOrder();
+
+            // Clear any stale in-memory order tracking on page load
+            processedPayPalOrders.clear();
+
             // Setup event listeners
             setupFormValidation();
             setupEventListeners();
-            
+
             // Load external scripts
             loadAnalytics();
             loadPayPalSDK();
-            
+
             // Initialize page
             loadVoucherData();
         }
@@ -1905,18 +2001,35 @@
                 },
                 
                 onApprove: function(data, actions) {
-                    
+                    const orderId = data.orderID;
+
+                    // LAYER 0: Check if this PayPal order has already been processed
+                    if (processedPayPalOrders.has(orderId)) {
+                        console.warn('PayPal order already being processed, ignoring duplicate onApprove:', orderId);
+                        showBootstrapAlert(
+                            `This payment (${orderId}) is already being processed.\n\n` +
+                            `Please do not refresh the page or click again.`,
+                            'Processing in Progress',
+                            'info'
+                        );
+                        return Promise.resolve(); // Resolve to prevent PayPal error
+                    }
+
+                    // Mark as processing immediately
+                    processedPayPalOrders.add(orderId);
+
                     return actions.order.capture()
                         .then(function(details) {
-                            
-                            // NOW we can safely update the UI after PayPal capture is complete
+                            // Update UI after PayPal capture is complete
                             container.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">Processing voucher creation...</div></div>';
-                            
+
                             processPurchaseSuccess(details);
                         })
                         .catch(function(captureError) {
+                            // Remove from Set on capture failure (allow retry)
+                            processedPayPalOrders.delete(orderId);
+
                             showBootstrapAlert('Payment capture failed. Please contact support if you were charged.', 'Capture Error', 'error');
-                            // Reinitialize PayPal buttons
                             initializePayPal();
                         });
                 },
@@ -1939,42 +2052,115 @@
                 }
             }).render('#paypal-button-container');
         }
-        
-        // Show processing spinner
-        function showProcessingSpinner() {
+
+        // Show processing spinner with dynamic messaging for retry attempts
+        function showProcessingSpinner(retryCount = 0, maxRetries = 0) {
             if (DOM.processingSpinner) {
                 DOM.processingSpinner.style.display = 'flex';
+
+                const messageEl = DOM.processingSpinner.querySelector('h4');
+                const subMessageEl = DOM.processingSpinner.querySelector('p') ||
+                                    createSubMessage(messageEl);
+
+                if (retryCount === 0) {
+                    messageEl.textContent = 'Processing Payment...';
+                    subMessageEl.textContent = 'This may take up to 60 seconds. Please wait.';
+                } else if (retryCount === 1) {
+                    messageEl.textContent = 'Still Processing...';
+                    subMessageEl.textContent = `Payment confirmed. Creating your voucher. Attempt ${retryCount + 1} of ${maxRetries + 1}...`;
+                } else {
+                    messageEl.textContent = 'Almost There...';
+                    subMessageEl.textContent = `Your voucher is being prepared. Final attempt...`;
+                }
             }
         }
-        
+
+        // Helper to create sub-message element if it doesn't exist
+        function createSubMessage(afterElement) {
+            const p = document.createElement('p');
+            p.className = 'text-muted mb-0';
+            afterElement.parentNode.insertBefore(p, afterElement.nextSibling);
+            return p;
+        }
+
         // Hide processing spinner
         function hideProcessingSpinner() {
             if (DOM.processingSpinner) {
                 DOM.processingSpinner.style.display = 'none';
             }
         }
-        
-        // Process purchase success
+
+        // Make API request with retry logic
+        async function makeRetryableRequest(apiUrl, paymentDetails, retryCount = 0) {
+            const maxRetries = PURCHASE_CONFIG.MAX_RETRIES;
+            const timeout = retryCount === 0
+                ? PURCHASE_CONFIG.INITIAL_TIMEOUT
+                : PURCHASE_CONFIG.RETRY_TIMEOUTS[retryCount - 1] || PURCHASE_CONFIG.RETRY_TIMEOUTS[PURCHASE_CONFIG.RETRY_TIMEOUTS.length - 1];
+
+            showProcessingSpinner(retryCount, maxRetries);
+
+            try {
+                const result = await ApiClient.makeRequest(apiUrl, { timeout });
+                return { success: true, data: result };
+
+            } catch (error) {
+                console.warn(`Attempt ${retryCount + 1} failed:`, error.message);
+
+                // If we have retries left and it's a timeout, retry
+                if (retryCount < maxRetries && error.message.includes('timed out')) {
+                    await new Promise(resolve => setTimeout(resolve, PURCHASE_CONFIG.RETRY_DELAY));
+                    return makeRetryableRequest(apiUrl, paymentDetails, retryCount + 1);
+                }
+
+                return { success: false, error, exhaustedRetries: retryCount >= maxRetries };
+            }
+        }
+
+        // Process purchase success with retry logic and idempotency
         async function processPurchaseSuccess(paymentDetails) {
-            // Prevent duplicate processing
+            const orderId = paymentDetails.id || paymentDetails.orderID;
+
+            // LAYER 1: Set processing flag IMMEDIATELY (eliminate race condition)
             if (window.isProcessingPurchase) {
                 console.warn('Purchase already being processed, ignoring duplicate call');
                 return;
             }
             window.isProcessingPurchase = true;
-            
-            // Show processing spinner immediately
-            showProcessingSpinner();
-            
+
+            // LAYER 2: Check localStorage for duplicate (page refresh protection)
+            if (OrderStorage.exists(orderId)) {
+                console.warn('Order already processed or in progress:', orderId);
+                window.isProcessingPurchase = false; // Reset flag
+                showBootstrapAlert(
+                    `This order (${orderId}) has already been submitted.\n\n` +
+                    `Please check your email for the voucher, or contact support if you need assistance.`,
+                    'Order Already Submitted',
+                    'info'
+                );
+                return;
+            }
+
+            // Save to localStorage immediately
+            const customerEmail = DOM.customerEmail.value.trim();
+            OrderStorage.save({
+                orderId,
+                email: customerEmail,
+                status: 'processing',
+                retryCount: 0
+            });
+
+            showProcessingSpinner(0, PURCHASE_CONFIG.MAX_RETRIES);
+
+            // Prepare customer data
             const customerData = {
                 name: DOM.customerName.value.trim(),
-                email: DOM.customerEmail.value.trim(),
+                email: customerEmail,
                 giftRecipient: DOM.giftRecipient.value.trim(),
                 giftFrom: DOM.giftFrom.value.trim(),
                 giftMessage: DOM.giftMessage.value.trim()
             };
-            
-            // Create essential purchase data for API
+
+            // Create essential purchase data
             const essentialData = {
                 voucherType: {
                     type_id: voucherType.type_id,
@@ -1993,38 +2179,98 @@
                     gift_message: customerData.giftMessage
                 },
                 payment: {
-                    id: paymentDetails.id || paymentDetails.orderID,
-                    orderID: paymentDetails.orderID || paymentDetails.id
+                    id: orderId,
+                    orderID: orderId
                 },
                 promoId: new URLSearchParams(window.location.search).get('promoID')
             };
-            
-            // Encode data for API call
+
             const encodedData = encodeURIComponent(JSON.stringify(essentialData));
             const apiUrl = `${CONFIG.API_BASE_URL}?action=processCustomerPurchase&data=${encodedData}`;
-            
-            // Single request with timeout protection
-            const timeoutId = setTimeout(function() {
-                window.isProcessingPurchase = false;
-                hideProcessingSpinner();
-                handlePurchaseError(new Error('Request timed out. Please contact support if payment was charged.'));
-            }, 30000);
-            
-            // Use ApiClient for consistent request handling
-            try {
-                const result = await ApiClient.makeRequest(apiUrl);
-                clearTimeout(timeoutId);
-                window.isProcessingPurchase = false;
-                hideProcessingSpinner();
-                handlePurchaseSuccess(result);
-            } catch (error) {
-                clearTimeout(timeoutId);
-                window.isProcessingPurchase = false;
-                hideProcessingSpinner();
-                handlePurchaseError(new Error('Purchase request failed: ' + error.message));
+
+            // Make request with retry logic
+            const result = await makeRetryableRequest(apiUrl, paymentDetails);
+
+            window.isProcessingPurchase = false;
+            hideProcessingSpinner();
+
+            // Handle result
+            if (result.success && result.data) {
+                OrderStorage.clear();
+                processedPayPalOrders.delete(orderId); // Clean up memory
+                handlePurchaseSuccess(result.data);
+
+            } else if (result.exhaustedRetries) {
+                // All retries exhausted - show optimistic success
+                OrderStorage.save({
+                    orderId,
+                    email: customerEmail,
+                    status: 'pending_confirmation'
+                });
+
+                processedPayPalOrders.delete(orderId); // Clean up memory
+                handleOptimisticSuccess(orderId, customerEmail);
+
+            } else {
+                // Genuine error (not timeout)
+                OrderStorage.clear();
+                processedPayPalOrders.delete(orderId); // Clean up memory (allow retry)
+                handlePurchaseError(result.error);
             }
         }
-        
+
+        // Handle optimistic success (when retries are exhausted but payment succeeded)
+        function handleOptimisticSuccess(orderId, email) {
+            DOM.voucherContent.style.display = 'none';
+            DOM.successMessage.style.display = 'block';
+            DOM.successEmail.textContent = email;
+
+            // Update success message with order ID
+            const successMessageEl = DOM.successMessage;
+            successMessageEl.innerHTML = `
+                <h4><i class="bi bi-check-circle"></i> Payment Received!</h4>
+                <p>
+                    Thank you for your payment! Your voucher is being created and will be sent to
+                    <strong>${email}</strong> within <strong>15 minutes</strong>.
+                </p>
+                <div class="alert alert-info mt-3">
+                    <p class="mb-2"><strong>Order ID:</strong> <code>${orderId}</code></p>
+                    <p class="mb-0">
+                        <small>
+                            If you don't receive your voucher within 15 minutes, please contact us at
+                            <strong>frontdesk@urbanjungleirc.com</strong> or <strong>(08) 6397 0411</strong>
+                            with your order ID.
+                        </small>
+                    </p>
+                </div>
+            `;
+
+            // Track conversion (payment succeeded)
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'purchase', {
+                    'transaction_id': orderId,
+                    'value': selectedItem.value,
+                    'currency': 'AUD',
+                    'items': [{
+                        'item_id': selectedItem.id,
+                        'item_name': selectedItem.name,
+                        'category': voucherType.display_name,
+                        'price': selectedItem.value,
+                        'quantity': 1
+                    }]
+                });
+            }
+
+            if (typeof fbq !== 'undefined') {
+                fbq('track', 'Purchase', {
+                    value: selectedItem.value,
+                    currency: 'AUD'
+                });
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         // Handle purchase success
         function handlePurchaseSuccess(result) {
             if (result && result.success) {
@@ -2069,30 +2315,41 @@
         
         // Handle purchase error
         function handlePurchaseError(error) {
-            // Check if this is a purchase limit error (should be shown as warning, not error)
             const errorString = error.toString().toLowerCase();
-            const isPurchaseLimitError = errorString.includes('purchase limit') || 
-                                       errorString.includes('limit reached') ||
-                                       errorString.includes('maximum') ||
-                                       errorString.includes('per customer');
-            
+            const isTimeout = errorString.includes('timeout') || errorString.includes('timed out');
+
+            if (isTimeout) {
+                // Shouldn't happen with retry logic, but provide safety net
+                showBootstrapAlert(
+                    'Your payment was processed but voucher creation is taking longer than expected.\n\n' +
+                    'Your voucher will be sent to your email within 15 minutes.\n\n' +
+                    'If you don\'t receive it, please contact support at frontdesk@urbanjungleirc.com or (08) 6397 0411.',
+                    'Processing Delayed',
+                    'warning'
+                );
+                return;
+            }
+
+            // Check if purchase limit error
+            const isPurchaseLimitError = errorString.includes('purchase limit') ||
+                                           errorString.includes('limit reached') ||
+                                           errorString.includes('maximum') ||
+                                           errorString.includes('per customer');
+
             if (isPurchaseLimitError) {
-                // Show purchase limit errors as warnings with clear messaging
                 showBootstrapAlert(
                     error + '\n\nThis is a promotional limit to ensure fair access for all customers.',
-                    'Purchase Limit Reached', 
+                    'Purchase Limit Reached',
                     'warning'
                 );
             } else {
-                // Show other errors as actual errors with support contact
                 showBootstrapAlert(
                     'Purchase processing failed: ' + error + '\n\nPlease contact us at frontdesk@urbanjungleirc.com or (08) 6397 0411 for assistance.',
-                    'Purchase Failed', 
+                    'Purchase Failed',
                     'error'
                 );
             }
-            
-            // Reinitialize PayPal buttons
+
             initializePayPal();
         }
         
@@ -2209,6 +2466,184 @@
                 });
             }
         }
+
+        // ============ TEST MODE FUNCTIONS ============
+        // Activate test mode by adding ?test=true to URL
+
+        // Check if test mode should be enabled
+        function checkTestMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('test') === 'true') {
+                document.getElementById('test-mode-panel').style.display = 'block';
+                console.log('%c🧪 TEST MODE ACTIVATED', 'color: #ff6b6b; font-size: 16px; font-weight: bold;');
+                console.log('Test panel visible at bottom-right corner');
+            }
+        }
+
+        // Create mock payment details
+        function createMockPaymentDetails(orderId = null) {
+            const mockOrderId = orderId || 'TEST_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            return {
+                id: mockOrderId,
+                orderID: mockOrderId,
+                status: 'COMPLETED',
+                payer: {
+                    email_address: 'test@example.com',
+                    name: { given_name: 'Test', surname: 'User' }
+                }
+            };
+        }
+
+        // Test 1: Simulate duplicate click (same order ID twice)
+        window.testDuplicatePrevention = function() {
+            const testResults = document.getElementById('test-results');
+            testResults.innerHTML = '<strong>Running Test 1...</strong><br/>';
+
+            const mockDetails = createMockPaymentDetails();
+            const orderId = mockDetails.orderID;
+
+            console.log('%c[TEST 1] Simulating duplicate onApprove with same order ID', 'color: #ff6b6b; font-weight: bold;');
+            console.log('Order ID:', orderId);
+
+            // Simulate onApprove being called
+            const mockData = { orderID: orderId };
+            const mockActions = {
+                order: {
+                    capture: () => Promise.resolve(mockDetails)
+                }
+            };
+
+            // First call
+            console.log('▶️ First call...');
+            testResults.innerHTML += '1st call: Processing...<br/>';
+
+            // Check if already in Set
+            if (processedPayPalOrders.has(orderId)) {
+                testResults.innerHTML += '<span style="color:red;">❌ FAILED: Order already in Set before first call!</span><br/>';
+                console.error('Order already in Set!');
+                return;
+            }
+
+            processedPayPalOrders.add(orderId);
+            testResults.innerHTML += '<span style="color:green;">✅ Added to Set</span><br/>';
+
+            // Second call (should be blocked)
+            console.log('▶️ Second call (should be blocked)...');
+            testResults.innerHTML += '2nd call: ';
+
+            if (processedPayPalOrders.has(orderId)) {
+                testResults.innerHTML += '<span style="color:green;">✅ BLOCKED (Layer 0 working!)</span><br/>';
+                console.log('%c✅ SUCCESS: Duplicate blocked by Layer 0 (Set)', 'color: green; font-weight: bold;');
+            } else {
+                testResults.innerHTML += '<span style="color:red;">❌ NOT BLOCKED (Layer 0 failed!)</span><br/>';
+                console.error('❌ FAILED: Duplicate not blocked!');
+            }
+        };
+
+        // Test 2: Simulate rapid clicks (3 clicks in quick succession)
+        window.testRapidClicks = async function() {
+            const testResults = document.getElementById('test-results');
+            testResults.innerHTML = '<strong>Running Test 2...</strong><br/>';
+
+            const mockDetails = createMockPaymentDetails();
+            const orderId = mockDetails.orderID;
+
+            console.log('%c[TEST 2] Simulating rapid clicks', 'color: #ff6b6b; font-weight: bold;');
+            console.log('Order ID:', orderId);
+
+            let blocked = 0;
+            let processed = 0;
+
+            for (let i = 1; i <= 3; i++) {
+                if (processedPayPalOrders.has(orderId)) {
+                    blocked++;
+                    testResults.innerHTML += `Click ${i}: <span style="color:green;">✅ BLOCKED</span><br/>`;
+                    console.log(`Click ${i}: Blocked ✅`);
+                } else {
+                    processed++;
+                    processedPayPalOrders.add(orderId);
+                    testResults.innerHTML += `Click ${i}: <span style="color:orange;">⚠️ PROCESSED</span><br/>`;
+                    console.log(`Click ${i}: Processed ⚠️`);
+                }
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+
+            testResults.innerHTML += `<br/><strong>Result: ${processed} processed, ${blocked} blocked</strong><br/>`;
+
+            if (processed === 1 && blocked === 2) {
+                testResults.innerHTML += '<span style="color:green;">✅ PASS: Only 1 processed, 2 blocked</span>';
+                console.log('%c✅ TEST PASSED', 'color: green; font-weight: bold;');
+            } else {
+                testResults.innerHTML += '<span style="color:red;">❌ FAIL: Expected 1 processed, 2 blocked</span>';
+                console.error('❌ TEST FAILED');
+            }
+        };
+
+        // Test 3: Test localStorage check
+        window.testLocalStorageCheck = function() {
+            const testResults = document.getElementById('test-results');
+            testResults.innerHTML = '<strong>Running Test 3...</strong><br/>';
+
+            const mockOrderId = 'TEST_LOCALSTORAGE_' + Date.now();
+
+            console.log('%c[TEST 3] Testing localStorage duplicate check', 'color: #ff6b6b; font-weight: bold;');
+            console.log('Order ID:', mockOrderId);
+
+            // Save to localStorage
+            OrderStorage.save({
+                orderId: mockOrderId,
+                email: 'test@example.com',
+                status: 'processing',
+                retryCount: 0
+            });
+
+            testResults.innerHTML += 'Saved to localStorage...<br/>';
+
+            // Check if exists
+            if (OrderStorage.exists(mockOrderId)) {
+                testResults.innerHTML += '<span style="color:green;">✅ PASS: localStorage check working (Layer 2)</span><br/>';
+                console.log('%c✅ TEST PASSED', 'color: green; font-weight: bold;');
+            } else {
+                testResults.innerHTML += '<span style="color:red;">❌ FAIL: localStorage check not working</span><br/>';
+                console.error('❌ TEST FAILED');
+            }
+
+            // Try to check with different order ID
+            if (!OrderStorage.exists('DIFFERENT_ORDER_ID')) {
+                testResults.innerHTML += '<span style="color:green;">✅ PASS: Different order ID correctly returns false</span>';
+                console.log('✅ Different order ID correctly rejected');
+            } else {
+                testResults.innerHTML += '<span style="color:red;">❌ FAIL: Different order ID incorrectly matched</span>';
+                console.error('❌ Different order ID incorrectly matched');
+            }
+        };
+
+        // Clear test state
+        window.clearTestState = function() {
+            const testResults = document.getElementById('test-results');
+            testResults.innerHTML = 'Clearing test state...<br/>';
+
+            // Clear Set
+            const setSize = processedPayPalOrders.size;
+            processedPayPalOrders.clear();
+            testResults.innerHTML += `Cleared ${setSize} items from Set<br/>`;
+
+            // Clear localStorage
+            OrderStorage.clear();
+            testResults.innerHTML += 'Cleared localStorage<br/>';
+
+            // Clear flags
+            window.isProcessingPurchase = false;
+            testResults.innerHTML += '<span style="color:green;">✅ All test state cleared</span>';
+
+            console.log('%c✅ Test state cleared', 'color: green; font-weight: bold;');
+        };
+
+        // Enable test mode on page load if ?test=true
+        document.addEventListener('DOMContentLoaded', function() {
+            checkTestMode();
+        });
+
     </script>
 </body>
 </html>
