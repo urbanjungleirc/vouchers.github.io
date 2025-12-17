@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(node -c:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(curl:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nFix duplicate voucher creation with multi-layered prevention strategy\n\nCritical fix for issue where users received two vouchers for one payment.\n\nRoot Cause:\n- Backend (code.gs) has no PayPal order ID deduplication\n- Frontend race condition allowed duplicate API calls\n- PayPal onApprove callback can fire multiple times due to network issues\n\nSolution - Multi-Layered Defense:\n\nLayer 0 (NEW): PayPal-level protection\n- In-memory Set tracks processed PayPal order IDs\n- Checks before calling actions.order.capture()\n- Blocks duplicate onApprove callbacks immediately\n\nLayer 1 (IMPROVED): Immediate flag setting\n- Set window.isProcessingPurchase flag immediately after order ID extraction\n- Eliminates 17-line race condition window\n- Reset flag when localStorage detects duplicate\n\nLayer 2 (EXISTING): Processing flag check\n- Keep window.isProcessingPurchase check\n- Now protected by earlier flag setting\n\nLayer 3 (EXISTING): localStorage persistence\n- Keep OrderStorage.exists() check\n- Prevents duplicates on page refresh or cross-tab\n\nAdditional Features:\n- Test mode (?test=true) with 3 automated tests\n- Console logging for debugging\n- Memory cleanup after success/error\n- Clear user messaging when duplicate detected\n\nFiles Changed:\n- index.html: Added duplicate prevention (was index_new.html)\n- index_old.html: Backup of original version\n- Removed: index_new.html\n\nEdge Cases Handled:\n✅ Rapid double-click on PayPal button\n✅ PayPal onApprove fires twice due to network\n✅ Race condition in processPurchaseSuccess\n✅ Page refresh during processing\n✅ Multiple tabs with same voucher link\n✅ Genuine capture errors (Set cleared, allows retry)\n\nTesting:\n- All 3 automated tests pass\n- Test mode available at: ?test=true\n\n🤖 Generated with Claude Code (https://claude.com/claude-code)\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
     ]
   }
 }
