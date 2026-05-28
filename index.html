@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Urban Jungle - Gift Vouchers</title>
+
+    <!-- Google Tag Manager -->
+    <script>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-NP52DRP3');
+    </script>
+    <!-- End Google Tag Manager -->
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -21,7 +31,7 @@
     
     <!-- PayPal SDK - will be loaded dynamically -->
     
-    <!-- Google Tag Manager - will be loaded dynamically -->
+    <!-- Google Tag Manager is loaded in the head -->
     
     <style>
         body { 
@@ -661,7 +671,10 @@
     </style>
 </head>
 <body>
-    <!-- Google Tag Manager (noscript) - will be loaded dynamically -->
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NP52DRP3"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     
     <!-- SVG Icons -->
     <svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
@@ -1263,26 +1276,6 @@
         
         // Load analytics
         function loadAnalytics() {
-            if (CONFIG.FEATURES.ENABLE_ANALYTICS && CONFIG.ANALYTICS.GTM_ID !== 'GTM-XXXXXXX') {
-                // Load Google Tag Manager
-                const gtmScript = document.createElement('script');
-                gtmScript.async = true;
-                gtmScript.src = `https://www.googletagmanager.com/gtm.js?id=${CONFIG.ANALYTICS.GTM_ID}`;
-                document.head.appendChild(gtmScript);
-                
-                // Initialize dataLayer
-                window.dataLayer = window.dataLayer || [];
-                window.dataLayer.push({
-                    'gtm.start': new Date().getTime(),
-                    'event': 'gtm.js'
-                });
-                
-                // Add noscript fallback
-                const noscript = document.createElement('noscript');
-                noscript.innerHTML = `<iframe src="https://www.googletagmanager.com/ns.html?id=${CONFIG.ANALYTICS.GTM_ID}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`;
-                document.body.insertBefore(noscript, document.body.firstChild);
-            }
-            
             if (CONFIG.FEATURES.ENABLE_FACEBOOK_PIXEL && CONFIG.ANALYTICS.FB_PIXEL_ID !== 'XXXXXXXXXXXXXXX') {
                 // Load Facebook Pixel
                 const fbScript = document.createElement('script');
@@ -1296,6 +1289,31 @@
                     fbq('track', 'PageView');
                 `;
                 document.head.appendChild(fbScript);
+            }
+        }
+
+        function trackPurchaseConversion(transactionId) {
+            const purchaseData = {
+                transaction_id: transactionId,
+                value: selectedItem.value,
+                currency: 'AUD',
+                items: [{
+                    item_id: selectedItem.id,
+                    item_name: selectedItem.name,
+                    category: voucherType.display_name,
+                    price: selectedItem.value,
+                    quantity: 1
+                }]
+            };
+
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({
+                event: 'purchase',
+                ecommerce: purchaseData
+            });
+
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'purchase', purchaseData);
             }
         }
         
@@ -2247,20 +2265,7 @@
             `;
 
             // Track conversion (payment succeeded)
-            if (typeof gtag !== 'undefined') {
-                gtag('event', 'purchase', {
-                    'transaction_id': orderId,
-                    'value': selectedItem.value,
-                    'currency': 'AUD',
-                    'items': [{
-                        'item_id': selectedItem.id,
-                        'item_name': selectedItem.name,
-                        'category': voucherType.display_name,
-                        'price': selectedItem.value,
-                        'quantity': 1
-                    }]
-                });
-            }
+            trackPurchaseConversion(orderId);
 
             if (typeof fbq !== 'undefined') {
                 fbq('track', 'Purchase', {
@@ -2283,20 +2288,7 @@
                 DOM.successEmail.textContent = DOM.customerEmail.value;
                 
                 // Track conversion
-                if (typeof gtag !== 'undefined') {
-                    gtag('event', 'purchase', {
-                        'transaction_id': result.voucherId,
-                        'value': selectedItem.value,
-                        'currency': 'AUD',
-                        'items': [{
-                            'item_id': selectedItem.id,
-                            'item_name': selectedItem.name,
-                            'category': voucherType.display_name,
-                            'price': selectedItem.value,
-                            'quantity': 1
-                        }]
-                    });
-                }
+                trackPurchaseConversion(result.voucherId);
                 
                 // Facebook Pixel conversion tracking
                 if (typeof fbq !== 'undefined') {
