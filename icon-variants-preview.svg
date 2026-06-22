@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <rect width="1200" height="720" fill="#f5f5f5"/>
+  <text x="60" y="58" font-family="Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" fill="#111827">Urban Jungle voucher icon variants</text>
+  <text x="60" y="88" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#6b7280">Recommended set plus alternate button options. Green/yellow cues come from the new UJ favicon; red stays as the new page accent.</text>
+
+  <defs>
+    <linearGradient id="sun" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#FF7A00"/>
+      <stop offset="100%" stop-color="#FFD700"/>
+    </linearGradient>
+    <linearGradient id="greenL" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2d8020"/>
+      <stop offset="100%" stop-color="#1d6014"/>
+    </linearGradient>
+    <linearGradient id="greenR" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1d6014"/>
+      <stop offset="100%" stop-color="#154c0e"/>
+    </linearGradient>
+    <clipPath id="iconClip">
+      <rect width="96" height="96" rx="18"/>
+    </clipPath>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#000000" flood-opacity="0.12"/>
+    </filter>
+    <g id="faviconMark" clip-path="url(#iconClip)">
+      <rect width="96" height="96" rx="18" fill="#142a08"/>
+      <circle cx="33" cy="37" r="26" fill="url(#sun)"/>
+      <polygon points="66,30 96,96 35,96" fill="url(#greenR)"/>
+      <polygon points="42,15 96,96 0,96" fill="url(#greenL)"/>
+      <polygon points="34,39 49,39 42,15" fill="#f4f8f0"/>
+      <polygon points="60,49 73,49 66,30" fill="#edf4ea"/>
+    </g>
+  </defs>
+
+  <g transform="translate(60 122)">
+    <rect width="1080" height="230" rx="16" fill="#ffffff" filter="url(#cardShadow)"/>
+    <text x="28" y="42" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#111827">Recommended set</text>
+    <text x="28" y="68" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#6b7280">Best fit for the new brand direction.</text>
+
+    <g transform="translate(44 102)">
+      <rect width="132" height="82" rx="41" fill="#ae222a"/>
+      <svg x="39" y="14" width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 18l5-10 4 6 3-5 4 9"/>
+        <path d="M9 8l1.5 3h-3z" fill="#ffffff" stroke="none"/>
+        <path d="M16 9l1 2h-2z" fill="#ffffff" stroke="none"/>
+        <path d="M5 20h14"/>
+      </svg>
+      <text x="66" y="116" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#111827">Button</text>
+      <text x="66" y="136" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#6b7280">Adventure peaks</text>
+    </g>
+
+    <g transform="translate(284 102)">
+      <rect width="96" height="82" rx="14" fill="#f7e9ea"/>
+      <svg x="21" y="14" width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#ae222a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 18l5-10 4 6 3-5 4 9"/>
+        <path d="M8.5 12h.01"/>
+        <path d="M11.5 15h.01"/>
+        <path d="M15.5 13h.01"/>
+        <path d="M18 17h.01"/>
+      </svg>
+      <text x="48" y="116" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#111827">Skill levels</text>
+      <text x="48" y="136" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#6b7280">Climbing route</text>
+    </g>
+
+    <g transform="translate(520 102)">
+      <rect width="96" height="82" rx="14" fill="#f7e9ea"/>
+      <svg x="21" y="14" width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#ae222a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="7" r="2.5"/>
+        <circle cx="6.5" cy="16" r="2.5"/>
+        <circle cx="17.5" cy="16" r="2.5"/>
+        <path d="M10 8.5l-2.2 5"/>
+        <path d="M14 8.5l2.2 5"/>
+        <path d="M9 16h6"/>
+      </svg>
+      <text x="48" y="116" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#111827">Community</text>
+      <text x="48" y="136" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#6b7280">Connected holds</text>
+    </g>
+
+    <g transform="translate(756 102)">
+      <rect width="96" height="82" rx="14" fill="#f7e9ea"/>
+      <svg x="21" y="14" width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#ae222a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 17l4-8 4 5 4-7 4 10"/>
+        <circle cx="7" cy="17" r="1.4"/>
+        <rect x="10.4" y="14.4" width="3.2" height="3.2" rx=".7"/>
+        <path d="M17 15.5l2 2-2 2-2-2z"/>
+      </svg>
+      <text x="48" y="116" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#111827">Disciplines</text>
+      <text x="48" y="136" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#6b7280">Hold shapes</text>
+    </g>
+
+    <g transform="translate(948 92)">
+      <use href="#faviconMark"/>
+      <text x="48" y="126" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#111827">Brand cue</text>
+      <text x="48" y="146" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#6b7280">New favicon</text>
+    </g>
+  </g>
+
+  <g transform="translate(60 392)">
+    <rect width="1080" height="250" rx="16" fill="#ffffff" filter="url(#cardShadow)"/>
+    <text x="28" y="42" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="700" fill="#111827">Alternate Choose Your Adventure button icons</text>
+    <text x="28" y="68" font-family="Segoe UI, Arial, sans-serif" font-size="14" fill="#6b7280">Three other options if you want a different feel for the CTA.</text>
+
+    <g transform="translate(90 112)">
+      <rect width="154" height="82" rx="41" fill="#ae222a"/>
+      <svg x="50" y="14" width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 19l7-14 7 14"/>
+        <path d="M10 9h4"/>
+        <path d="M8 19h8"/>
+        <path d="M9 14h6"/>
+      </svg>
+      <text x="77" y="118" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#111827">Peak gift</text>
+    </g>
+
+    <g transform="translate(408 112)">
+      <rect width="154" height="82" rx="41" fill="#ae222a"/>
+      <svg x="50" y="14" width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 19c6-1 10-5 12-12"/>
+        <circle cx="6" cy="19" r="2"/>
+        <circle cx="12" cy="14" r="1.8"/>
+        <circle cx="18" cy="7" r="2"/>
+        <path d="M4 21h16"/>
+      </svg>
+      <text x="77" y="118" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#111827">Route marker</text>
+    </g>
+
+    <g transform="translate(726 112)">
+      <rect width="154" height="82" rx="41" fill="#ae222a"/>
+      <svg x="50" y="14" width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="6" width="16" height="12" rx="2"/>
+        <path d="M8 15l3-6 3 4 2-3 2 5"/>
+        <path d="M4 10h16"/>
+      </svg>
+      <text x="77" y="118" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="14" font-weight="700" fill="#111827">Adventure pass</text>
+    </g>
+  </g>
+</svg>

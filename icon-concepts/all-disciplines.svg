@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="All climbing disciplines icon">
+  <rect x="20" y="22" width="120" height="116" rx="22" fill="#142a08"/>
+  <path d="M20 48h120v90H20Z" fill="#f7efe7"/>
+  <path d="M20 49 62 22h78v116H91Z" fill="#5a3c31"/>
+  <path d="M20 103 73 64l67 74H20Z" fill="#ead7ca"/>
+  <path d="M44 118c12-36 30-58 58-75" fill="none" stroke="#f4f8f0" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 12"/>
+  <path d="M116 37v83" stroke="#142a08" stroke-width="4" stroke-linecap="round"/>
+  <path d="m106 54 10-14 10 14" fill="none" stroke="#ff7a00" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#ae222a" stroke="#142a08" stroke-width="2">
+    <circle cx="46" cy="116" r="7"/>
+    <path d="M70 86c8-4 16 4 10 12-6 7-18 4-18-5 0-3 3-5 8-7Z"/>
+    <rect x="93" y="58" width="15" height="15" rx="4" transform="rotate(-14 100.5 65.5)"/>
+  </g>
+  <g stroke="#142a08" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="74" cy="73" r="5" fill="#142a08" stroke="none"/>
+    <path d="M74 78v18l-13 11"/>
+    <path d="M74 86l12-12"/>
+    <path d="M74 96l14 8"/>
+  </g>
+  <g fill="none" stroke="#f4f8f0" stroke-width="4" stroke-linecap="round">
+    <path d="M105 95c6 9 14 9 20 0"/>
+    <path d="M109 103c4 5 8 5 12 0"/>
+  </g>
+</svg>

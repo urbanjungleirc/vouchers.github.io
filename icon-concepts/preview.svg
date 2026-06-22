@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760">
+  <rect width="1280" height="760" fill="#f5f5f5"/>
+  <text x="64" y="58" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="750" fill="#111827">Urban Jungle SVG icon concepts</text>
+  <text x="64" y="88" font-family="Segoe UI, Arial, sans-serif" font-size="15" fill="#6b7280">Flat vector climbing-poster style, with UJ mountain greens, orange sun, cream wall panels, and the voucher page red.</text>
+
+  <defs>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000" flood-opacity=".12"/>
+    </filter>
+  </defs>
+
+  <g transform="translate(64 126)">
+    <g>
+      <rect width="250" height="250" rx="18" fill="#fff" filter="url(#shadow)"/>
+      <rect x="39" y="28" width="172" height="172" rx="30" fill="#f7e9ea"/>
+      <image x="59" y="48" width="132" height="132" href="all-skill-levels.svg"/>
+      <text x="125" y="222" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="750" fill="#111827">All Skill Levels</text>
+    </g>
+
+    <g transform="translate(294)">
+      <rect width="250" height="250" rx="18" fill="#fff" filter="url(#shadow)"/>
+      <rect x="39" y="28" width="172" height="172" rx="30" fill="#f7e9ea"/>
+      <image x="59" y="48" width="132" height="132" href="thriving-community.svg"/>
+      <text x="125" y="222" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="750" fill="#111827">Thriving Community</text>
+    </g>
+
+    <g transform="translate(588)">
+      <rect width="250" height="250" rx="18" fill="#fff" filter="url(#shadow)"/>
+      <rect x="39" y="28" width="172" height="172" rx="30" fill="#f7e9ea"/>
+      <image x="59" y="48" width="132" height="132" href="all-disciplines.svg"/>
+      <text x="125" y="222" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="750" fill="#111827">All Disciplines</text>
+    </g>
+  </g>
+
+  <g transform="translate(64 438)">
+    <g>
+      <rect width="250" height="220" rx="18" fill="#fff" filter="url(#shadow)"/>
+      <rect x="58" y="30" width="134" height="84" rx="42" fill="#ae222a"/>
+      <image x="82" y="24" width="86" height="86" href="cta-present.svg"/>
+      <text x="125" y="146" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="750" fill="#111827">CTA Present</text>
+      <text x="125" y="170" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#6b7280">present-only button icon</text>
+    </g>
+
+    <g transform="translate(294)">
+      <rect width="250" height="220" rx="18" fill="#fff" filter="url(#shadow)"/>
+      <rect x="39" y="24" width="172" height="104" rx="20" fill="#f7e9ea"/>
+      <image x="63" y="12" width="124" height="124" href="cta-ticket-present.svg"/>
+      <text x="125" y="146" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="750" fill="#111827">Ticket + Present</text>
+      <text x="125" y="170" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#6b7280">voucher badge option</text>
+    </g>
+
+    <g transform="translate(588)">
+      <rect width="250" height="220" rx="18" fill="#fff" filter="url(#shadow)"/>
+      <rect x="39" y="18" width="172" height="116" rx="22" fill="#f7e9ea"/>
+      <image x="61" y="8" width="128" height="128" href="cta-sun-mountains.svg"/>
+      <text x="125" y="146" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="750" fill="#111827">Sun + Mountains</text>
+      <text x="125" y="170" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="13" fill="#6b7280">extracted CTA 1 mood</text>
+    </g>
+  </g>
+</svg>
